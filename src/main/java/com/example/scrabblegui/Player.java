@@ -1,103 +1,119 @@
 package com.example.scrabblegui;
 
-import java.util.ArrayList;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Objects;
 
-public class Player {
-    private String name;
-    private List<Character> tiles;
+public class Player implements Serializable {
+    private Tile[] tiles;
     private int score;
-    private Scanner scanner;
-    private static final int MAX_TILES = 7;
 
-    public Player(String name) {
-        this.name = name;
-        tiles = new ArrayList<>();
+    /**
+     * Constructor for the Player class.
+     * Initializes the player's tiles and score.
+     */
+    public Player() {
+        tiles = new Tile[7];
         score = 0;
-        scanner = new Scanner(System.in);
     }
 
-    public String getName() {
-        return name;
+    /**
+     * Get the score of the player.
+     *
+     * @return The score of the player as a string.
+     */
+    public String getScore() {
+        return String.valueOf(score);
     }
 
-    public int getScore() {
-        return score;
+    /**
+     * Set the score of the player.
+     *
+     * @param num The score to be set.
+     */
+    public void setScore(int num) {
+        score = num;
     }
 
-    public void updateScore(int points) {
-        score += points;
+    /**
+     * Add points to the player's score.
+     *
+     * @param num The points to be added.
+     */
+    public void addScore(int num) {
+        score = score + num;
     }
 
-    public void displayTiles() {
-        System.out.println("Your tiles: " + tiles);
+    /**
+     * Randomize the order of the tiles in the player's hand.
+     */
+    public void randomizeTiles() {
+        List<Tile> list = Arrays.asList(tiles);
+        Collections.shuffle(list);
+        list.toArray(tiles);
     }
 
-    public void refillTiles(Bag bag) {
-        while (tiles.size() < MAX_TILES && !bag.isEmpty()) {
-            char tile = bag.drawTile();
-            tiles.add(tile);
-        }
-    }
-    public void clearTiles() {
-        tiles.clear();
-    }
-
-    public boolean hasNoTiles() {
-        return tiles.isEmpty();
-    }
-
-    public String getWord() {
-        System.out.print("Enter word (leave blank to pass): ");
-        return scanner.nextLine().toUpperCase();
-    }
-
-
-    public boolean isHorizontal() {
-        System.out.print("Is the word horizontal? (Y/N): ");
-        String choice = scanner.next();
-        scanner.nextLine(); // Consume the newline character
-        return choice.equalsIgnoreCase("Y");
-    }
-
-    public int getRow() {
-        System.out.print("Enter row: ");
-        int row;
-        while (true) {
-            try {
-                row = Integer.parseInt(scanner.nextLine());
-                if (row >= 0 && row < 15) {
-                    break;
-                } else {
-                    System.out.println("Invalid input. Please enter a valid row within the board size.");
-                    System.out.print("Enter row: ");
+    /**
+     * Organize the player's hand by moving null tiles to the end of the hand.
+     */
+    public void organizeHand() {
+        int i = 0;
+        while (i < 6) {
+            if(tiles[i] == null)	{
+                for(int j = i + 1; j < 7; j++){
+                    if(tiles[j] != null){
+                        tiles[i] = tiles[j];
+                        tiles[j] = null;
+                        break;
+                    }
                 }
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a valid integer for the row.");
-                System.out.print("Enter row: ");
             }
+            i++;
         }
-        return row;
     }
 
-    public int getCol() {
-        System.out.print("Enter column: ");
-        int col;
-        while (true) {
-            try {
-                col = Integer.parseInt(scanner.nextLine());
-                if (col >= 0 && col < 15) {
-                    break;
-                } else {
-                    System.out.println("Invalid input. Please enter a valid column within the board size.");
-                    System.out.print("Enter column: ");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a valid integer for the column.");
-                System.out.print("Enter column: ");
+    /**
+     * Remove a tile from the player's hand at the specified index.
+     *
+     * @param index The index of the tile to be removed.
+     * @return The removed tile.
+     */
+    public Tile removeTile(int index) {
+        Tile temp = tiles[index];
+        tiles[index] = null;
+        return temp;
+    }
+
+    /**
+     * Add a tile to the player's hand.
+     *
+     * @param tile The tile to be added.
+     */
+    public void addTile(Tile tile) {
+        for(int i = 0; i < tiles.length; i++)
+            if (tiles[i] == null) {
+                tiles[i] = tile;
+                return;
             }
-        }
-        return col;
+    }
+
+    /**
+     * Get the number of non-null tiles in the player's hand.
+     *
+     * @return The size of the player's hand.
+     */
+    public int getSize() {
+        return (int) Arrays.stream(tiles).filter(Objects::nonNull).count();
+    }
+
+    /**
+     * Get the tiles in the player's hand.
+     *
+     * @return The tiles in the player's hand.
+     */
+    public Tile[] getTiles() {
+        return this.tiles;
     }
 }

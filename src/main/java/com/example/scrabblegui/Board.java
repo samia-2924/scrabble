@@ -1,190 +1,119 @@
 package com.example.scrabblegui;
 
-public class Board {
-    private char[][] grid;
+import java.io.Serializable;
 
-    public Board(int size) {
-        grid = new char[size][size];
+public class Board implements Serializable {
+    protected Cell[][] cellMatrix;
+
+    public Board() {
+        createBoard();
+        connectCells();
+        createBonus();
     }
 
-    public boolean isValidMove(String word, int row, int col, boolean isHorizontal) {
-        int wordLength = word.length();
-        int lastRow = row + (isHorizontal ? 0 : wordLength - 1);
-        int lastCol = col + (isHorizontal ? wordLength - 1 : 0);
+    /**
+     * Get the matrix of cells representing the board.
+     *
+     * @return The matrix of cells.
+     */
+    public Cell[][] getCellMatrix() {
+        return cellMatrix;
+    }
 
-        if (lastRow >= 15 || lastCol >= 15) {
-            return false;
-        }
+    /**
+     * Create the initial board by initializing each cell in the cell matrix.
+     */
+    public void createBoard() {
+        cellMatrix = new Cell[15][15];
 
-        for (int i = 0; i < wordLength; i++) {
-            char tile = grid[row + (isHorizontal ? 0 : i)][col + (isHorizontal ? i : 0)];
-            if (tile != 0 && tile != word.charAt(i)) {
-                return false;
+        for (int i = 0; i < 15; i++) {
+            for (int j = 0; j < 15; j++) {
+                cellMatrix[i][j] = new Cell();
             }
         }
-
-        return true;
     }
 
-
-    public int placeWord(String word, int row, int col, boolean isHorizontal) {
-        int score = 0;
-        int wordMultiplier = 1;
-
-        for (int i = 0; i < word.length(); i++) {
-            char tile = word.charAt(i);
-            int tileScore = getTileScore(tile);
-            int letterMultiplier = getLetterMultiplier(row, col, isHorizontal, i);
-
-            score += tileScore * letterMultiplier;
-            grid[row + (isHorizontal ? 0 : i)][col + (isHorizontal ? i : 0)] = tile;
-
-            wordMultiplier *= getWordMultiplier(row, col, isHorizontal, i);
-        }
-
-
-        return score * wordMultiplier;
-    }
-
-    private int getLetterMultiplier(int row, int col, boolean isHorizontal, int i) {
-        int multiplier = 1;
-        if (isHorizontal) {
-            multiplier = getHorizontalLetterMultiplier(row, col + i);
-        } else {
-            multiplier = getVerticalLetterMultiplier(row + i, col);
-        }
-        return multiplier;
-    }
-
-    private int getWordMultiplier(int row, int col, boolean isHorizontal, int i) {
-        int multiplier = 1;
-        if (isHorizontal) {
-            multiplier = getHorizontalWordMultiplier(row, col + i);
-        } else {
-            multiplier = getVerticalWordMultiplier(row + i, col);
-        }
-        return multiplier;
-    }
-
-    private int getTileScore(char tile) {
-        int score = 0;
-        switch (Character.toUpperCase(tile)) {
-            case 'A':
-            case 'E':
-            case 'I':
-            case 'O':
-            case 'U':
-            case 'L':
-            case 'N':
-            case 'S':
-            case 'T':
-            case 'R':
-                score = 1;
-                break;
-            case 'D':
-            case 'G':
-                score = 2;
-                break;
-            case 'B':
-            case 'C':
-            case 'M':
-            case 'P':
-                score = 3;
-                break;
-            case 'F':
-            case 'H':
-            case 'V':
-            case 'W':
-            case 'Y':
-                score = 4;
-                break;
-            case 'K':
-                score = 5;
-                break;
-            case 'J':
-            case 'X':
-                score = 8;
-                break;
-            case 'Q':
-            case 'Z':
-                score = 10;
-                break;
-        }
-        return score;
-    }
-
-    private int getHorizontalLetterMultiplier(int row, int col) {
-        int multiplier = 1;
-        if (row >= 0 && row < 15 && col >= 0 && col < 15) {
-            char tile = grid[row][col];
-            if (Character.isLetter(tile)) {
-                if (Character.isUpperCase(tile)) {
-                    multiplier = 2;
-                } else {
-                    multiplier = 3;
-                }
+    /**
+     * Connect each cell in the cell matrix to its neighboring cells.
+     */
+    public void connectCells() {
+        for (int i = 0; i < 15; i++) {
+            for (int j = 0; j < 15; j++) {
+                connectCell(i, j, i - 1, j, Direction.TOP);
+                connectCell(i, j, i + 1, j, Direction.BOTTOM);
+                connectCell(i, j, i, j - 1, Direction.LEFT);
+                connectCell(i, j, i, j + 1, Direction.RIGHT);
             }
         }
-        return multiplier;
     }
 
-    private int getVerticalLetterMultiplier(int row, int col) {
-        int multiplier = 1;
-        if (row >= 0 && row < 15 && col >= 0 && col < 15) {
-            char tile = grid[row][col];
-            if (Character.isLetter(tile)) {
-                if (Character.isUpperCase(tile)) {
-                    multiplier = 2;
-                } else {
-                    multiplier = 3;
-                }
-            }
+    /**
+     * Create the bonus positions on the board and assign bonuses to those positions.
+     */
+    public void createBonus() {
+        int[][] bonusPositions = {
+                {7, 7}, {0, 0}, {7, 0}, {14, 0}, {0, 7}, {0, 14}, {7, 14}, {14, 7}, {14, 14}, {5, 1}, {9, 1}, {1, 5}, {5, 5},
+                {9, 5}, {13, 5}, {1, 9}, {5, 9}, {9, 9}, {13, 9}, {5, 13}, {9, 13}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {4, 10}, {3, 11},
+                {2, 12}, {1, 13}, {13, 1}, {12, 2}, {11, 3}, {10, 4}, {10, 10}, {11, 11}, {12, 12}, {13, 13}, {3, 0}, {11, 0},
+                {0, 3}, {6, 2}, {7, 3}, {8, 2}, {14, 3}, {2, 6}, {6, 6}, {8, 6}, {12, 6}, {3, 7}, {11, 7}, {2, 8}, {6, 8}, {8, 8},
+                {12, 8}, {0, 11}, {7, 11}, {14, 11}, {6, 12}, {8, 12}, {3, 14}, {6, 12}, {11, 14}
+        }; // 38
+
+        String[] bonuses = {
+                "X", "TW", "TW", "TW", "TW", "TW", "TW", "TW", "TW", "TL", "TL", "TL", "TL", "TL", "TL", "TL", "TL", "TL", "TL", "TL",
+                "TL", "TL", "DW", "DW", "DW", "DW", "DW", "DW", "DW", "DW", "DW", "DW", "DW", "DW", "DW", "DW", "DW", "DW", "DL", "DL", "DL",
+                "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL", "DL",
+                "DL", "DL", "DL", "DL"
+        };
+
+        for (int i = 0; i < bonusPositions.length; i++) {
+            int[] position = bonusPositions[i];
+            String bonus = bonuses[i];
+            setBonus(position[0], position[1], bonus);
         }
-        return multiplier;
     }
 
-    private int getHorizontalWordMultiplier(int row, int col) {
-        int multiplier = 1;
-        if (row >= 0 && row < 15 && col >= 0 && col < 15) {
-            char tile = grid[row][col];
-            if (Character.isLetter(tile)) {
-                if (Character.isUpperCase(tile)) {
-                    multiplier = 2;
-                } else {
-                    multiplier = 3;
-                }
-            }
-        }
-        return multiplier;
+    /**
+     * Set a bonus on a specific cell at the given row and column.
+     *
+     * @param row   The row index of the cell.
+     * @param col   The column index of the cell.
+     * @param bonus The bonus to be set on the cell.
+     */
+    private void setBonus(int row, int col, String bonus) {
+        cellMatrix[row][col].setBonus(bonus);
     }
 
-    private int getVerticalWordMultiplier(int row, int col) {
-        int multiplier = 1;
-        if (row >= 0 && row < 15 && col >= 0 && col < 15) {
-            char tile = grid[row][col];
-            if (Character.isLetter(tile)) {
-                if (Character.isUpperCase(tile)) {
-                    multiplier = 2;
-                } else {
-                    multiplier = 3;
-                }
+    /**
+     * Connect a cell to its neighboring cell in the given direction.
+     *
+     * @param row        The row index of the current cell.
+     * @param col        The column index of the current cell.
+     * @param newRow     The row index of the neighboring cell.
+     * @param newCol     The column index of the neighboring cell.
+     * @param direction  The direction in which the cells are being connected.
+     */
+    private void connectCell(int row, int col, int newRow, int newCol, Direction direction) {
+        if (newRow >= 0 && newRow < 15 && newCol >= 0 && newCol < 15) {
+            Cell currentCell = cellMatrix[row][col];
+            Cell connectedCell = cellMatrix[newRow][newCol];
+
+            switch (direction) {
+                case TOP -> currentCell.setTop(connectedCell);
+                case BOTTOM -> currentCell.setBottom(connectedCell);
+                case LEFT -> currentCell.setLeft(connectedCell);
+                case RIGHT -> currentCell.setRight(connectedCell);
             }
         }
-        return multiplier;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-
-        for (char[] row : grid) {
-            for (char tile : row) {
-                sb.append(tile == 0 ? "." : tile);
-                sb.append(" ");
-            }
-            sb.append("\n");
-        }
-
-        return sb.toString();
+    /**
+     * Enumeration representing the directions for connecting cells.
+     */
+    enum Direction {
+        TOP,
+        BOTTOM,
+        LEFT,
+        RIGHT
     }
 }

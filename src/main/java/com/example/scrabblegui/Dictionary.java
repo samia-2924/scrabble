@@ -1,32 +1,46 @@
 package com.example.scrabblegui;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Scanner;
 import java.util.Set;
 
-public class Dictionary {
-    private Set<String> words;
+public class Dictionary implements Serializable {
+    private Set<String> wordSet;
 
     public Dictionary() {
-        words = new HashSet<>();
-        loadWords();
-    }
-
-    private void loadWords() {
-        String filePath = "words.txt";
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                words.add(line.toUpperCase());
-            }
-        } catch (IOException e) {
-            System.err.println("Error loading dictionary: " + e.getMessage());
+        wordSet = new HashSet<>();
+        try {
+            addFileToDictionary();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
     }
 
+    /**
+     * Adds words from a file to the dictionary.
+     *
+     * @throws FileNotFoundException If the file is not found.
+     */
+    public void addFileToDictionary() throws FileNotFoundException {
+        File file = new File("words.txt");
+        try (Scanner sc = new Scanner(file)) {
+            while (sc.hasNextLine()) {
+                String word = sc.nextLine().toLowerCase();
+                wordSet.add(word);
+            }
+        }
+    }
+
+    /**
+     * Checks if a word is valid according to the dictionary.
+     *
+     * @param word The word to check.
+     * @return True if the word is valid, false otherwise.
+     */
     public boolean isValidWord(String word) {
-        return words.contains(word);
+        return wordSet.contains(word.toLowerCase());
     }
 }
